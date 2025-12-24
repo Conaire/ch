@@ -10,8 +10,26 @@
 
     <div class="draft-container">
       <div class="select-title-container">
-        <h2 class="select-title">{{ caseData?.model_1 ? 'SELECT DEFENDANT MODEL' : 'SELECT PLANTIFF MODEL' }}</h2>
+        <h2 class="select-title">
+          {{ caseData?.model_1 ? 'SELECT DEFENDANT MODEL' : 'SELECT PLANTIFF MODEL' }}
+          <span v-if="caseData?.model_1" class="or-share" @click="showSharePopup = true">or share</span>
+        </h2>
         <div class="case-code" v-if="caseCode">{{ caseCode }}</div>
+      </div>
+      
+      <!-- Share Popup -->
+      <div class="share-overlay" v-if="showSharePopup" @click.self="showSharePopup = false">
+        <div class="share-popup">
+          <button class="close-popup" @click="showSharePopup = false">&times;</button>
+          <h3>Share this case</h3>
+          <p class="share-description">Share this link to invite someone to be the defendant:</p>
+          <div class="share-url-container">
+            <input type="text" readonly :value="shareUrl" class="share-url-input" ref="shareUrlInput" />
+            <button @click="copyToClipboard" class="copy-btn">
+              {{ copied ? '✓ Copied!' : 'Copy' }}
+            </button>
+          </div>
+        </div>
       </div>
       <div class="models-grid" v-if="!loading && models.length > 0">
         <div
@@ -66,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import api from '../api'
 
 const emit = defineEmits(['trial-ready'])
@@ -79,6 +97,33 @@ const imageErrors = ref({})
 const caseCode = ref(null)
 const deviceId = ref(null)
 const caseData = ref(null)
+const showSharePopup = ref(false)
+const copied = ref(false)
+const shareUrlInput = ref(null)
+
+const shareUrl = computed(() => {
+  return window.location.href
+})
+
+const copyToClipboard = async () => {
+  try {
+    await navigator.clipboard.writeText(shareUrl.value)
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
+  } catch (err) {
+    // Fallback for older browsers
+    if (shareUrlInput.value) {
+      shareUrlInput.value.select()
+      document.execCommand('copy')
+      copied.value = true
+      setTimeout(() => {
+        copied.value = false
+      }, 2000)
+    }
+  }
+}
 
 const generateUUID = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -268,6 +313,109 @@ onMounted(() => {
   border-color: #ffd700;
 }
 
+.or-share {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffd700;
+  cursor: pointer;
+  margin-left: 1rem;
+  padding: 0.4rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.2s, border-color 0.2s;
+  text-decoration: none;
+}
+
+.or-share:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: #ffd700;
+}
+
+.share-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.share-popup {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+}
+
+.share-popup h3 {
+  color: #ffd700;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.3rem;
+}
+
+.share-description {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.close-popup {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-popup:hover {
+  color: #fff;
+}
+
+.share-url-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.share-url-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.copy-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a2e;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+  min-width: 100px;
+}
+
+.copy-btn:hover {
+  transform: translateY(-2px);
+}
+
 .draft-container {
   flex: 1;
   display: flex;
@@ -295,6 +443,8 @@ onMounted(() => {
   letter-spacing: 0.1em;
   margin: 0;
   text-align: left;
+  display: flex;
+  align-items: center;
 }
 
 .case-code {
