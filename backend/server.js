@@ -19,6 +19,11 @@ app.use('/api/transcript', require('./routes/transcript'));
 app.use('/api/state-machine', require('./routes/stateMachine'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'thecourthouse.ai API', version: '1.0.0' });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'AI Courthouse API is running' });
