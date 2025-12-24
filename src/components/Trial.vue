@@ -18,9 +18,15 @@
             <div class="model-image">
               <img v-if="plaintiffModel.image_url" :src="plaintiffModel.image_url" :alt="plaintiffModel.lawyer_name" />
               <img src="/images/deskphoto.png" alt="Desk" class="desk-overlay" />
-              <div class="response-box-overlay" v-if="latestParty1Response">
+              <div class="winner-badge" v-if="caseData?.winner === 1">
+                <div class="winner-badge-content">WINNER</div>
+              </div>
+              <div class="response-box-overlay" v-if="latestParty1Response && !showParty1Input && !waitingForParty1">
                 <div class="response-text">{{ latestParty1Response }}</div>
                 <button @click="advanceTrial" class="next-btn" v-if="showNextButtonParty1">Next</button>
+              </div>
+              <div class="response-box-overlay waiting" v-else-if="waitingForParty1">
+                <div class="response-text waiting-text">Waiting for response...</div>
               </div>
               <div class="input-box-overlay" v-if="showParty1Input">
                 <div class="chat-input-container">
@@ -66,12 +72,15 @@
             <div class="model-image">
               <img v-if="defendantModel.image_url" :src="defendantModel.image_url" :alt="defendantModel.lawyer_name" />
               <img src="/images/deskphoto.png" alt="Desk" class="desk-overlay" />
-              <div class="winner-badge">
+              <div class="winner-badge" v-if="caseData?.winner === 2">
                 <div class="winner-badge-content">WINNER</div>
               </div>
-              <div class="response-box-overlay" v-if="latestParty2Response">
+              <div class="response-box-overlay" v-if="latestParty2Response && !showParty2Input && !waitingForParty2">
                 <div class="response-text">{{ latestParty2Response }}</div>
                 <button @click="advanceTrial" class="next-btn" v-if="showNextButtonParty2">Next</button>
+              </div>
+              <div class="response-box-overlay waiting" v-else-if="waitingForParty2">
+                <div class="response-text waiting-text">Waiting for response...</div>
               </div>
              
               <div class="input-box-overlay" v-if="showParty2Input">
@@ -204,6 +213,32 @@ const showParty2Input = computed(() => {
   
   // Show input if current state is for party_2 and ai is false
   return stateDef.role === 'party_2' && stateDef.ai === false
+})
+
+// Computed property to check if we're waiting for party_1 response (for other viewers)
+const waitingForParty1 = computed(() => {
+  const stateDef = currentStateDef.value
+  if (!stateDef) return false
+  
+  // State requires party_1 input but current device is not party_1
+  if (stateDef.role === 'party_1' && stateDef.ai === false) {
+    const isParty1 = caseData.value?.party_device_1 === deviceId.value
+    return !isParty1
+  }
+  return false
+})
+
+// Computed property to check if we're waiting for party_2 response (for other viewers)
+const waitingForParty2 = computed(() => {
+  const stateDef = currentStateDef.value
+  if (!stateDef) return false
+  
+  // State requires party_2 input but current device is not party_2
+  if (stateDef.role === 'party_2' && stateDef.ai === false) {
+    const isParty2 = caseData.value?.party_device_2 === deviceId.value
+    return !isParty2
+  }
+  return false
 })
 
 // Computed property to get latest party_1 response
@@ -804,8 +839,18 @@ onMounted(async () => {
   background: #f5f5f0;
   border-radius: 12px;
   border: 2px solid rgba(255, 215, 0, 0.4);
-  max-height: 100px;
-  overflow-y: auto;
+}
+
+.waiting-text {
+  font-style: italic;
+  color: #666;
+  text-align: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 .response-textarea {
