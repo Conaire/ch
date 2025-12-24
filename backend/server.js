@@ -17,6 +17,7 @@ app.use('/api/models', require('./routes/models'));
 app.use('/api/cases', require('./routes/cases'));
 app.use('/api/transcript', require('./routes/transcript'));
 app.use('/api/state-machine', require('./routes/stateMachine'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
 
 // Health check
 app.get('/api/health', (req, res) => {

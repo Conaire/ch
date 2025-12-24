@@ -79,7 +79,7 @@ async function generateClosingStatement(transcript, role, modelName = 'openai/gp
  * Generate a verdict from the judge based on the case transcript
  * @param {Array} transcript - Array of transcript entries with role and content
  * @param {string} modelName - AI model to use
- * @returns {Promise<string>} Generated verdict (max 2 sentences)
+ * @returns {Promise<string>} Generated verdict - first char is "1" (plaintiff wins) or "2" (defendant wins), followed by explanation
  */
 async function generateVerdict(transcript, modelName = 'openai/gpt-4o') {
   const transcriptText = transcript
@@ -89,15 +89,22 @@ async function generateVerdict(transcript, modelName = 'openai/gpt-4o') {
     })
     .join('\n');
   
-  const systemPrompt = `You are an impartial AI arbitrator judge. Based on the arguments presented, deliver a clear verdict stating which party wins and why. Maximum 2 sentences. Be decisive.`;
+  const systemPrompt = `You are an impartial AI arbitrator judge. Based on the arguments presented, deliver a clear verdict. Your response MUST start with exactly "1" if Plaintiff wins or "2" if Defendant wins, immediately followed by a space and your verdict explanation. Maximum 2 sentences for the explanation. Be decisive. Example: "1 The court finds in favor of the Plaintiff because..."`;
   
-  const userPrompt = `Case transcript:\n${transcriptText}\n\nDeliver your verdict:`;
+  const userPrompt = `Case transcript:\n${transcriptText}\n\nDeliver your verdict (remember: start with 1 for Plaintiff win or 2 for Defendant win):`;
   
   try {
-    return await getText(modelName, systemPrompt, userPrompt);
+    const result = await getText(modelName, systemPrompt, userPrompt);
+    // Ensure result starts with 1 or 2
+    if (result && (result.startsWith('1') || result.startsWith('2'))) {
+      return result;
+    }
+    // If AI didn't follow format, default to 1 with the result
+    console.warn('[aiService] Verdict did not start with 1 or 2, defaulting to 1');
+    return `1 ${result}`;
   } catch (error) {
     console.error('Error generating verdict:', error);
-    return `After reviewing the arguments, the court finds in favor of the party with the stronger case.`;
+    return `1 After reviewing the arguments, the court finds in favor of the Plaintiff.`;
   }
 }
 

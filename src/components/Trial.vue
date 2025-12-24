@@ -131,7 +131,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import api from '../api'
 
 const props = defineProps({
   caseCode: {
@@ -243,7 +243,7 @@ const initializeDeviceId = () => {
 
 const fetchCase = async () => {
   try {
-    const response = await axios.get(`/api/cases/${props.caseCode}`, {
+    const response = await api.get(`/api/cases/${props.caseCode}`, {
       params: { partyId: deviceId.value }
     })
     caseData.value = JSON.parse(JSON.stringify(response.data))
@@ -255,7 +255,7 @@ const fetchCase = async () => {
 
 const fetchModels = async () => {
   try {
-    const response = await axios.get('/api/models')
+    const response = await api.get('/api/models')
     models.value = response.data
     console.log('Models fetched:', models.value.length)
   } catch (error) {
@@ -267,7 +267,7 @@ const fetchTranscript = async () => {
   if (!caseData.value?.id) return
   
   try {
-    const response = await axios.get(`/api/transcript/case/${caseData.value.id}`)
+    const response = await api.get(`/api/transcript/case/${caseData.value.id}`)
     transcript.value = response.data || []
     console.log('Transcript fetched:', transcript.value.length, 'entries')
   } catch (error) {
@@ -277,7 +277,7 @@ const fetchTranscript = async () => {
 
 const fetchStates = async () => {
   try {
-    const response = await axios.get('/api/state-machine/states')
+    const response = await api.get('/api/state-machine/states')
     states.value = response.data || []
     console.log('States fetched:', states.value.length, 'states')
   } catch (error) {
@@ -298,7 +298,7 @@ const submitResponse = async (role) => {
   }
   
   try {
-    const response = await axios.post('/api/transcript', {
+    const response = await api.post('/api/transcript', {
       caseId: caseData.value.id,
       role,
       content
@@ -348,7 +348,7 @@ const advanceTrial = async () => {
   }
   
   try {
-    const response = await axios.post(`/api/state-machine/${caseData.value.id}`)
+    const response = await api.post(`/api/state-machine/${caseData.value.id}`)
     console.log('State machine advanced:', response.data)
     
     await fetchCase()

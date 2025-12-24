@@ -4,6 +4,7 @@
       <div class="header-content">
         <h1 class="header-logo">thecourthouse.ai</h1>
         <a href="/" class="new-case-btn">New Case</a>
+        <a href="/leaderboard" class="leaderboard-btn">Leaderboard</a>
       </div>
     </header>
 
@@ -66,7 +67,7 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import axios from 'axios'
+import api from '../api'
 
 const emit = defineEmits(['trial-ready'])
 
@@ -110,7 +111,7 @@ const checkUrlForCase = () => {
 
 const createCase = async () => {
   try {
-    const response = await axios.post('/api/cases', {
+    const response = await api.post('/api/cases', {
       partyId: deviceId.value
     })
     caseCode.value = response.data.code
@@ -130,7 +131,7 @@ const pollCase = async () => {
   if (!caseCode.value) return
   
   try {
-    const response = await axios.get(`/api/cases/${caseCode.value}`, {
+    const response = await api.get(`/api/cases/${caseCode.value}`, {
       params: { partyId: deviceId.value }
     })
     caseData.value = response.data
@@ -145,7 +146,7 @@ const fetchModels = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await axios.get('/api/models')
+    const response = await api.get('/api/models')
     models.value = response.data
   } catch (err) {
     console.error('Error fetching models:', err)
@@ -160,7 +161,7 @@ const selectModel = async (model) => {
   
   if (caseCode.value && deviceId.value) {
     try {
-      const response = await axios.patch(`/api/cases/${caseCode.value}/model`, {
+      const response = await api.patch(`/api/cases/${caseCode.value}/model`, {
         partyId: deviceId.value,
         modelId: model.id
       })
@@ -246,6 +247,25 @@ onMounted(() => {
 
 .new-case-btn:active {
   transform: translateY(0);
+}
+
+.leaderboard-btn {
+  padding: 0.4rem 1rem;
+  background: transparent;
+  color: #ffd700;
+  text-decoration: none;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.leaderboard-btn:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: #ffd700;
 }
 
 .draft-container {

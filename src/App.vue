@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <ModelPicker v-if="!showTrial" @trial-ready="handleTrialReady" />
+    <Leaderboard v-if="currentPage === 'leaderboard'" />
+    <ModelPicker v-else-if="!showTrial" @trial-ready="handleTrialReady" />
     <Trial v-else :case-code="caseCode" />
   </div>
 </template>
@@ -9,10 +10,21 @@
 import { ref, onMounted } from 'vue'
 import ModelPicker from './components/ModelPicker.vue'
 import Trial from './components/Trial.vue'
-import axios from 'axios'
+import Leaderboard from './components/Leaderboard.vue'
+import api from './api'
 
 const showTrial = ref(false)
 const caseCode = ref(null)
+const currentPage = ref('home')
+
+const checkRoute = () => {
+  const path = window.location.pathname
+  if (path === '/leaderboard') {
+    currentPage.value = 'leaderboard'
+    return true
+  }
+  return false
+}
 
 const checkCaseStatus = async () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -20,7 +32,7 @@ const checkCaseStatus = async () => {
   
   if (caseCodeFromUrl) {
     try {
-      const response = await axios.get(`/api/cases/${caseCodeFromUrl}`)
+      const response = await api.get(`/api/cases/${caseCodeFromUrl}`)
       const caseData = response.data
       
       // If both models and judge are selected, show trial
@@ -40,7 +52,9 @@ const handleTrialReady = (code) => {
 }
 
 onMounted(() => {
-  checkCaseStatus()
+  if (!checkRoute()) {
+    checkCaseStatus()
+  }
 })
 </script>
 

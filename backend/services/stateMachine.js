@@ -107,8 +107,19 @@ async function processStateMachine(caseId) {
             content = loopCurrentDef.prompt;
             console.log('doing prompt');
         } else if (loopCurrentDef.generator === 'verdict') {
-            // Generate AI verdict
-            content = await generateVerdict(transcriptRows);
+            // Generate AI verdict - first char is winner (1 or 2)
+            const verdictResult = await generateVerdict(transcriptRows);
+            const winner = verdictResult.charAt(0);
+            content = verdictResult.substring(1).trim();
+            
+            // Update case winner
+            if (winner === '1' || winner === '2') {
+                await db.query(
+                    'UPDATE cases SET winner = ? WHERE id = ?',
+                    [parseInt(winner), String(caseId)]
+                );
+                console.log(`[StateMachine] Updated case winner to: ${winner}`);
+            }
         } else if(loopCurrentDef.generator === 'question') {
             // Generate AI cross-examination question
             content = await generateQuestion(transcriptRows, loopCurrentDef.role);
